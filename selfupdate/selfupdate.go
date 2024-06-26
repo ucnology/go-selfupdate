@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/go-version"
 	"io"
 	"io/ioutil"
 	"log"
@@ -194,8 +195,20 @@ func (u *Updater) Update() error {
 	}
 
 	// we are on the latest version, nothing to do
-	if u.Info.Version == u.CurrentVersion {
-		return nil
+	// Andy 20240626: Check version up and down
+	// if u.Info.Version == u.CurrentVersion {
+	//     return nil
+	//}
+	currentVersion, cvErr := version.NewVersion(u.CurrentVersion)
+	lastVersion, lvErr := version.NewVersion(u.Info.Version)
+	if cvErr != nil || lvErr != nil {
+		if u.Info.Version == u.CurrentVersion {
+			return nil
+		}
+	} else {
+		if currentVersion.GreaterThanOrEqual(lastVersion) {
+			return nil
+		}
 	}
 
 	old, err := os.Open(path)
